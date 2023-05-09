@@ -22,19 +22,22 @@ SWdesmat <- function(Tp) {
   return(Xsw)
 }
 
-DsgnCst <- function(Xdes,Tp, m, c, s,sprim, R, Rprim){
+DsgnCst <- function(Xdes,Tp, N,m, c, s,sprim, R, Rprim){
   # Returns total trial cost, given:
   #   - number of periods, Tp
+  #   - number of clusters per each sequence, N
   #   - number of subjects per cluster-period, m
   #   - cost per cluster, c
-  #   - cost per subject, s
-  #   - restart cost under intervention condition, Ri
-  #   - restart cost under intervention condition, Rc
+  #   - cost per subject under intervention condition, s
+  #   - cost per subject under intervention condition, sprim
+  #   - restart cost under intervention condition, R
+  #   - restart cost under intervention condition, Rprim
   #   - number of clusters with at least one non-missing cell, K
   #   - total non-missing cells, o
   #   - length of gaps, l
   #   - number of gaps, n
  
+  #assume one cluster per each sequence
   n_1=numeric(Tp-1)
   len_gaps_1=numeric(Tp-1)
   n_2=numeric(Tp-1)
@@ -64,16 +67,16 @@ DsgnCst <- function(Xdes,Tp, m, c, s,sprim, R, Rprim){
     #count clusters that have at least one non-missing value.
     k[i]=ifelse(sum(!is.na(Xdes[i,]))>0,1,0)
   }
-  
-  o=sum(!is.na(Xdes[,]))
+  #consider equal number of clusters per each sequence
+  o=sum(!is.na(Xdes[,]))*N
 
-  R_1=sum(n_1)*R
+  R_1=sum(n_1)*R*N
 
-  R_2=sum(n_2)*Rprim
+  R_2=sum(n_2)*Rprim*N
 
   k=sum(k)
 
-  cvec <- k*c + 0.5*o*m*(s+sprim) + R_1 + R_2
+  cvec <- k*N*c + 0.5*o*m*(s+sprim) + R_1 + R_2
   
   return(cvec)
 }
@@ -114,7 +117,7 @@ ICPair = function(Xdes,m,rho0,r,type) {
   return(ICmat)
 }
 
-IterRemove = function(Tp,m,rho0,r,type,c,s,sprim,R,Rprim){
+IterRemove = function(Tp,N,m,rho0,r,type,c,s,sprim,R,Rprim){
   
   K=Tp-1
   mval <- list()    #minimum lowest information content values
@@ -123,7 +126,7 @@ IterRemove = function(Tp,m,rho0,r,type,c,s,sprim,R,Rprim){
   Xdlist[[1]] <- SWdesmat(Tp)
   dlist[[1]] <- ICPair(Xdlist[[1]],m,rho0,r,type)
   cvec<- c()
-  cvec[1]<-DsgnCst(Xdlist[[1]],Tp, m, c, s,sprim, R,Rprim)[[1]]
+  cvec[1]<-DsgnCst(Xdlist[[1]],Tp,N, m, c, s,sprim, R,Rprim)[[1]]
   varvec<- c()
   varvec[1]<-CRTVarGeneralAdj(Xdlist[[1]],m,rho0,r,type)
   #removal of pairs of cells
@@ -139,7 +142,7 @@ IterRemove = function(Tp,m,rho0,r,type,c,s,sprim,R,Rprim){
     Xdlist[[i]][clustid,perid]<- NA
     Xdlist[[i]][K+1-clustid,Tp+1-perid]<- NA
     
-    cvec[i]=DsgnCst(Xdlist[[i]], Tp, m, c, s,sprim, R,Rprim)
+    cvec[i]=DsgnCst(Xdlist[[i]],Tp,N, m, c, s,sprim, R,Rprim)
     varvec[i]<-CRTVarGeneralAdj(Xdlist[[i]],m,rho0,r,type)
     
     dlist[[i]] = ICPair(Xdlist[[i]],m,rho0,r,type)

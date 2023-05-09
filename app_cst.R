@@ -19,7 +19,9 @@ library("RColorBrewer")
 library("tidyr")
 
 ui <- fluidPage(
-    titlePanel(h1("Information content of progressively reduced stepped wedge designs",h2(""),h3(""))),
+    titlePanel(h1("Cost-efficient incomplete stepped wedge designs",
+                  h2("Using an iterative approach"),
+                    h3(""))),
     sidebarLayout(
         
         sidebarPanel(
@@ -32,7 +34,13 @@ ui <- fluidPage(
                          min = 1,
                          max=1000,
                          step = 1,
-                         value = 100),
+                         value = 50),
+            numericInput("N",
+                         "Number of clusters per each sequence, N:",
+                         min = 1,
+                         max=1000,
+                         step = 1,
+                         value = 5),
             hr(),
             
             h4("Correlation parameters"),
@@ -56,7 +64,7 @@ ui <- fluidPage(
             
             sliderInput("effsize", "Effect size:",
                         min = 0.05, max = 1.0,
-                        value = 0.2, step = 0.05,ticks = FALSE),
+                        value = 0.2, step = 0.01,ticks = FALSE),
             
             hr(),
             
@@ -112,13 +120,18 @@ ui <- fluidPage(
                          plotlyOutput("Powplot"),
                          textOutput("ICpowtext")
                 ),
-                tabPanel("Trial cost",
+                tabPanel("Total cost",
                          uiOutput("plotheader5a"), uiOutput("plotheader5b"),
                          plotlyOutput("Cstplot"),
                          textOutput("ICcsttext")
                 ),
-                tabPanel("Design choice",
-                           uiOutput("plotheader6a"), uiOutput("plotheader6b"),
+                tabPanel("Relative cost efficiency",
+                         uiOutput("plotheader6a"), uiOutput("plotheader6b"),
+                         plotlyOutput("RCEplot"),
+                         textOutput("ICRCEtext")
+                ),
+                tabPanel("Cost vs Variance",
+                           uiOutput("plotheader7a"), uiOutput("plotheader7b"),
                            plotlyOutput("CstVarplot"),
                            textOutput("ICcstVartext")
                 ),
@@ -130,9 +143,28 @@ ui <- fluidPage(
     )
 )
 server <- function(input, output, session) {
-    
+    output$ICremtext <- renderText({
+        "Information content of progressively reduced stepped wedge designs"
+    })
+    output$ICvartext <- renderText({
+        "..."
+    })
+    output$ICRvartext <- renderText({
+        "ddd"
+    })
+    output$ICPowtext <- renderText({
+        "..."
+    })
+    output$ICCsttext <- renderText({
+        "..."
+    })
+    output$ICRCEtext <- renderText({
+        "..."
+    })
+    output$ICcstVartext <- renderText({
+        "..."
+    })
     output$text <- renderText({
-        
         paste(
             "For more information please contact us:",
             "Monash University",
@@ -142,28 +174,12 @@ server <- function(input, output, session) {
             "Australia",
             "ehsan.rezaeidarzi@monash.edu", sep="\n")
     })
-    output$ICremtext <- renderText({
-        "..."
-    })
-    output$ICvartext <- renderText({
-        "..."
-    })
-    output$ICRvartext <- renderText({
-        "..."
-    })
-    output$ICPowtext <- renderText({
-        "..."
-    })
-    output$ICCsttext <- renderText({
-        "..."
-    })
-    output$ICstVartext <- renderText({
-        "..."
-    })
+   
     
     values <- reactiveValues(
         Tp = 5,
-        m = 100,
+        m = 50,
+        N=5,
         rho0 = 0.05,
         r=0.95,
         type=1,
@@ -178,6 +194,7 @@ server <- function(input, output, session) {
     observeEvent(input$update, {
         values$Tp <- input$Tp
         values$m <- input$m
+        values$N <- input$N
         values$rho0 <- input$rho0
         values$r <- input$r
         values$type <- input$type
@@ -260,12 +277,25 @@ server <- function(input, output, session) {
     header6b <- renderPrint({
         tags$h4("")
     })
+    output$plotheader6a <- eventReactive(input$update, {
+        header7a()
+    })
+    output$plotheader6b <- eventReactive(input$update, {
+        header7b()
+    })
+    header7a <- renderPrint({
+        tags$h3("")
+    })
+    header7b <- renderPrint({
+        tags$h4("")
+    })
     
     output$varREMplot<-renderPlotly({
         
         Tp=values$Tp
         K=values$Tp-1
         m=values$m
+        N=values$N
         rho0=values$rho0
         r=values$r
         type=values$type
@@ -273,10 +303,10 @@ server <- function(input, output, session) {
         s=values$s
         sprim=values$sprim
         R=values$R
-        Rprim=values$R
+        Rprim=values$Rprim
         
         #Put parameters here
-        IterRes<- IterRemove(Tp,m,rho0,r,type,c,s,sprim,R,Rprim)
+        IterRes<- IterRemove(Tp,N,m,rho0,r,type,c,s,sprim,R,Rprim)
         melted_varmatexcl<- melt(IterRes[[1]])
         melted_desmatexcl<- melt(IterRes[[2]])
         
@@ -301,6 +331,8 @@ server <- function(input, output, session) {
         #power
         iter=1:length(varmatall)
         df=as.data.frame(varmatall)
+        #adjust variance to consider an equal number of clusters per each sequence
+        df$varmatall=(df$varmatall)/N
         
         pow <- function(vars, effsize, siglevel=0.05){
             z <- qnorm(siglevel/2)
@@ -321,6 +353,9 @@ server <- function(input, output, session) {
         res <- cbind(res,res$variance[1]/res$variance,(1-(res$variance[1]/res$variance))*100,cvec)
         colnames(res) <- c("iter","variance","power","r","Rvariance","Effloss","cost")
         
+        #Biometrics-2017-Wu
+        res$CE <- (1/(res$variance))/(res$cost)
+        res$RCE <- (res$CE)/(res$CE[1])
         
         melted_varmatexcl_t <- merge(res, melted_varmatexcl_t, by = "iter", all = TRUE)
         
@@ -399,21 +434,42 @@ server <- function(input, output, session) {
                        margin=list(l=100, r=60))
             print(p)
         })
-        
+        tv<- min(res$variance)+max(res$variance)
         output$CstVarplot<-renderPlotly({
-                        p <- plot_ly(res, height=500, width=800)%>%
+             p <- plot_ly(res, height=500, width=800)%>%
                             add_markers(x=~variance, y=~cost,type="scatter",
                                         mode = 'markers', hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
                                         text=~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE) ,
-                                                    "<br>Variance:",  round(variance,4)),showlegend = F)%>%
+                                                    "<br>Variance:",  round(variance,4),
+                                                    "<br>Power:",  format(round(power,2),2),"%"),showlegend = F)%>%
                 layout(xaxis=list(title="Variance", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
+                                  tickmode = "array", tickfont=list(size=16), nticks=6, ticks="inside",
+                                  mirror=TRUE, showgrid=FALSE,type = "auto"),
+                       #tickvals = list(0,round(min(res$variance),2),round(tv/4,2),round(tv/3,2),round(tv/2,2),round(max(res$variance),2))),
                        yaxis=list(title="Cost ($)", titlefont=list(size=18), tickfont=list(size=16),
                                   mirror=TRUE, showline=TRUE),
                        legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
                        margin=list(l=100, r=60))
         })
+        
+        #Biometrics-2017-Wu
+        #Relative cost efficiency plot
+        output$RCEplot<-renderPlotly({
+            p <- plot_ly(res, height=500, width=800, x=~iter, y=~RCE, name="Relative Cost efficiency", type="scatter",
+                       mode="markers", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
+                       text=~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE)
+                                   ,"<br> RCE", round(RCE,4)),
+                       line=list(color="#00BA38", width=4, dash="dash"))%>%
+                       layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
+                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
+                                  mirror=TRUE, showgrid=FALSE),
+                       yaxis=list(title="Relative cost efficiency", titlefont=list(size=18), tickfont=list(size=16),
+                                  mirror=TRUE, showline=TRUE),
+                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
+                       margin=list(l=100, r=60))
+            print(p)
+        })
+
 
         
         print(p1)
