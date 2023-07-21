@@ -1,6 +1,7 @@
 #setwd("G:\\Shared drives\\Ehsan PhD work\\Codes\\Git\\Iterative-removals-IC-cost\\")
 source("CRTVarAdj_func.R", local=TRUE)
 source("IterRemCst_func.R", local=TRUE)
+source("FigGenDf_func.R", local=TRUE)
 #source("IterRemoval_func.R", local=TRUE)
 
 library("shiny")
@@ -18,29 +19,32 @@ library("plotly")
 library("RColorBrewer")
 library("tidyr")
 
+
+
 ui <- fluidPage(
+    
+    tags$head(includeHTML(("google-analytics.html"))),
+  
     titlePanel(h1("Cost-efficient incomplete stepped wedge designs",
                   h2("Using an iterative approach"),
-                    h3(""))),
+                  h3(""))),
     sidebarLayout(
-        
         sidebarPanel(
             h4("Trial configuration"),
-            
             sliderInput(inputId = "Tp", label = "Number of periods:",
-                        min = 5, max = 20, value = 5,  step = 1,ticks = FALSE),
+                        min = 5, max = 20, value = 6,  step = 1,ticks = FALSE),
             numericInput("m",
                          "Number of subjects in each cluster-period, m:",
                          min = 1,
                          max=1000,
                          step = 1,
-                         value = 50),
+                         value = 7),
             numericInput("N",
                          "Number of clusters per each sequence, N:",
                          min = 1,
                          max=1000,
                          step = 1,
-                         value = 5),
+                         value = 7),
             hr(),
             
             h4("Correlation parameters"),
@@ -62,9 +66,17 @@ ui <- fluidPage(
             
             h4("Effect Size"),
             
-            sliderInput("effsize", "Effect size:",
+            sliderInput("effsiz", "Effect size:",
                         min = 0.05, max = 1.0,
-                        value = 0.2, step = 0.01,ticks = FALSE),
+                        value = 0.27, step = 0.01,ticks = FALSE),
+            
+            hr(),
+            
+            h4("Minimal Acceptable Power"),
+            
+            numericInput("accept_pwr", "Acceptable power (%):",
+                         min = 0, max = 100,
+                         value = 80, step = 1),
             
             hr(),
             
@@ -76,24 +88,24 @@ ui <- fluidPage(
                          value = 2500, step = 100),
             
             # Input: Interval, cost per subject receiving intervention 
-            numericInput("s", "Cost per subject receiving intervention ",
+            numericInput("p", "Cost per subject receiving intervention ",
                          min = 0, max = 5000,
-                         value = 100, step = 50),
+                         value = 140, step = 10),
             
             # Input: Interval, cost per subject receiving control
-            numericInput("sprim", "Cost per subject receiving control",
+            numericInput("pprim", "Cost per subject receiving control",
                          min = 0, max = 5000,
-                         value = 100, step = 50),
+                         value = 80, step = 10),
             
             # Input: Interval, Cost of restarting an intervention condition
             numericInput("R", "Restart cost (intervention)",
                          min = 0, max = 50000,
-                         value = 250, step = 50),
+                         value = 230, step = 50),
             bsTooltip("R","Cost of restarting an intervention condition","right"),
             # Input: Interval, Cost of restarting a control condition
             numericInput("Rprim", "Restart cost (control)",
                          min = 0, max = 50000,
-                         value = 250, step = 50),
+                         value = 0, step = 50),
             bsTooltip("Rprim","Cost of restarting a control condition","right"),
             # clicks the button
             actionButton("update", "Update"),
@@ -104,36 +116,38 @@ ui <- fluidPage(
                          uiOutput("plotheader1a"), uiOutput("plotheader1b"),
                          plotlyOutput("varREMplot"),
                          textOutput("ICremtext")
-                ),
-                tabPanel("Variance",
-                         uiOutput("plotheader2a"), uiOutput("plotheader2b"),
-                         plotlyOutput("Varsplot"),
-                         textOutput("ICvartext")
-                ),
-                tabPanel("Efficiency loss",
-                         uiOutput("plotheader3a"), uiOutput("plotheader3b"),
-                         plotlyOutput("Efflossplot"),
-                         textOutput("ICRvartext")
-                ),
-                tabPanel("Power",
-                         uiOutput("plotheader4a"), uiOutput("plotheader4b"),
-                         plotlyOutput("Powplot"),
-                         textOutput("ICpowtext")
-                ),
-                tabPanel("Total cost",
-                         uiOutput("plotheader5a"), uiOutput("plotheader5b"),
-                         plotlyOutput("Cstplot"),
-                         textOutput("ICcsttext")
+                         #textOutput("errorText")
                 ),
                 tabPanel("Relative cost efficiency",
                          uiOutput("plotheader6a"), uiOutput("plotheader6b"),
                          plotlyOutput("RCEplot"),
                          textOutput("ICRCEtext")
                 ),
+                tabPanel("Power",
+                         uiOutput("plotheader4a"), uiOutput("plotheader4b"),
+                         plotlyOutput("Powplot"),
+                         textOutput("ICpowtext")
+                ),
+                tabPanel("Variance",
+                         uiOutput("plotheader2a"), uiOutput("plotheader2b"),
+                         plotlyOutput("Varsplot"),
+                         textOutput("ICvartext")
+                ),
+                tabPanel("Precision loss",
+                         uiOutput("plotheader3a"), uiOutput("plotheader3b"),
+                         plotlyOutput("Prelossplot"),
+                         textOutput("ICRvartext")
+                ),
+                
+                tabPanel("Total cost",
+                         uiOutput("plotheader5a"), uiOutput("plotheader5b"),
+                         plotlyOutput("Cstplot"),
+                         textOutput("ICcsttext")
+                ),
                 tabPanel("Cost vs Variance",
-                           uiOutput("plotheader7a"), uiOutput("plotheader7b"),
-                           plotlyOutput("CstVarplot"),
-                           textOutput("ICcstVartext")
+                         uiOutput("plotheader7a"), uiOutput("plotheader7b"),
+                         plotlyOutput("CstVarplot"),
+                         textOutput("ICcstVartext")
                 ),
                 tabPanel("Contact us",
                          verbatimTextOutput("text")
@@ -150,7 +164,7 @@ server <- function(input, output, session) {
         "..."
     })
     output$ICRvartext <- renderText({
-        "ddd"
+        ""
     })
     output$ICPowtext <- renderText({
         "..."
@@ -159,7 +173,7 @@ server <- function(input, output, session) {
         "..."
     })
     output$ICRCEtext <- renderText({
-        "..."
+        ""
     })
     output$ICcstVartext <- renderText({
         "..."
@@ -174,21 +188,21 @@ server <- function(input, output, session) {
             "Australia",
             "ehsan.rezaeidarzi@monash.edu", sep="\n")
     })
-   
     
     values <- reactiveValues(
-        Tp = 5,
-        m = 50,
-        N=5,
+        Tp = 6,
+        m = 7,
+        N=7,
         rho0 = 0.05,
         r=0.95,
         type=1,
-        effsize=0.2,
+        effsiz=0.27,
+        accept_pwr=80,
         c=2500,
-        s=50,
-        sprim=50,
-        R=250,
-        Rprim=250
+        p=140,
+        pprim=80,
+        R=230,
+        Rprim=0
     )
     
     observeEvent(input$update, {
@@ -198,10 +212,11 @@ server <- function(input, output, session) {
         values$rho0 <- input$rho0
         values$r <- input$r
         values$type <- input$type
-        values$effsize <- input$effsize
+        values$effsiz <- input$effsiz
+        values$accept_pwr<- input$accept_pwr
         values$c <- input$c
-        values$s <- input$s
-        values$sprim <- input$sprim
+        values$p <- input$p
+        values$pprim <- input$pprim
         values$R <- input$R
         values$Rprim <- input$Rprim
     })
@@ -236,7 +251,7 @@ server <- function(input, output, session) {
         header3b()
     })
     header3a <- renderPrint({
-        tags$h3("Efficiency loss compared to complete design")
+        tags$h3("Precision loss compared to complete design")
     })
     header3b <- renderPrint({
         tags$h4("")
@@ -248,7 +263,7 @@ server <- function(input, output, session) {
         header4b()
     })
     header4a <- renderPrint({
-        tags$h3(paste0("Power to detect effect size of ", input$effsize))
+        tags$h3(paste0("Power to detect effect size of ", input$effsiz))
     })
     header4b <- renderPrint({
         tags$h4("Number of iterations")
@@ -272,15 +287,15 @@ server <- function(input, output, session) {
         header6b()
     })
     header6a <- renderPrint({
-        tags$h3("")
+        tags$h3("Relative cost efficiency = Cost efficiency of the progressively reduced designs / Cost efficiency of the complete design")
     })
     header6b <- renderPrint({
-        tags$h4("")
+        tags$h4("Cost efficiency = Precision of the treatment effect / Total study cost")
     })
-    output$plotheader6a <- eventReactive(input$update, {
+    output$plotheader7a <- eventReactive(input$update, {
         header7a()
     })
-    output$plotheader6b <- eventReactive(input$update, {
+    output$plotheader7b <- eventReactive(input$update, {
         header7b()
     })
     header7a <- renderPrint({
@@ -290,193 +305,90 @@ server <- function(input, output, session) {
         tags$h4("")
     })
     
-    output$varREMplot<-renderPlotly({
-        
-        Tp=values$Tp
-        K=values$Tp-1
-        m=values$m
-        N=values$N
-        rho0=values$rho0
-        r=values$r
-        type=values$type
-        c=values$c
-        s=values$s
-        sprim=values$sprim
-        R=values$R
-        Rprim=values$Rprim
-        
-        #Put parameters here
-        IterRes<- IterRemove(Tp,N,m,rho0,r,type,c,s,sprim,R,Rprim)
-        melted_varmatexcl<- melt(IterRes[[1]])
-        melted_desmatexcl<- melt(IterRes[[2]])
-        
-        names(melted_desmatexcl)[names(melted_desmatexcl)=="value"] <- "Xdvalue"
-        melted_varmatexcl_t<- jointdataset <- merge(melted_varmatexcl, melted_desmatexcl, by = c('Var1','Var2','L1'))
-        melted_varmatexcl_t$value<-round(melted_varmatexcl_t$value, 4)
-        
-        color_palette <-colorRampPalette(brewer.pal(8, "YlOrRd"))(length(unique(melted_varmatexcl_t$value))-2)
-        
-        
-        names(melted_varmatexcl_t)[names(melted_varmatexcl_t)=="Var1"] <- "Sequence"
-        names(melted_varmatexcl_t)[names(melted_varmatexcl_t)=="Var2"] <- "Period"
-        names(melted_varmatexcl_t)[names(melted_varmatexcl_t)=="L1"] <- "iter"
-        
-        Xdes <- SWdesmat(Tp)
-        varmatall<- IterRes[[3]]
-        cvec<- IterRes[[4]]
-        
-        Tp <- ncol(Xdes)
-        K  <- nrow(Xdes)
-        
-        #power
-        iter=1:length(varmatall)
-        df=as.data.frame(varmatall)
-        #adjust variance to consider an equal number of clusters per each sequence
-        df$varmatall=(df$varmatall)/N
-        
-        pow <- function(vars, effsize, siglevel=0.05){
-            z <- qnorm(siglevel/2)
-            pow <- pnorm(z + sqrt(1/vars)*effsize)
-            return(pow)
-        }
-        
-        powdf <- function(df, effsize, siglevel=0.05){
-            powvals <- apply(df, MARGIN=2, pow, effsize, siglevel)
-            powdf <- data.frame(iter, df$varmatall,powvals*100)
-            colnames(powdf) <- c("iter","variance","power")
-            return(powdf)
-        }
-        res <- powdf(df,values$effsize)
-        res$r <- r
-        
-        
-        res <- cbind(res,res$variance[1]/res$variance,(1-(res$variance[1]/res$variance))*100,cvec)
-        colnames(res) <- c("iter","variance","power","r","Rvariance","Effloss","cost")
-        
-        #Biometrics-2017-Wu
-        res$CE <- (1/(res$variance))/(res$cost)
-        res$RCE <- (res$CE)/(res$CE[1])
-        
-        melted_varmatexcl_t <- merge(res, melted_varmatexcl_t, by = "iter", all = TRUE)
-        
-        ##option 2: fast
-        p1<-plot_ly(melted_varmatexcl_t, x = ~as.numeric(Period), xgap = 4,y = ~as.factor(Sequence),ygap =4, frame = ~iter,
-                    z=~value,type = 'heatmap', colors=color_palette,
-                    hoverinfo="text",showscale = FALSE,hoverlabel=list(bordercolor=NULL, font=list(size=14)),
-                    hovertext=~ifelse(value<100,
-                                      paste("Xdvalue:",Xdvalue,"<br>InfCont:",value),
-                                      paste("Xdvalue:",Xdvalue,"<br>InfCont:",'IC cannot be calculated')))%>%
-            layout(plot_bgcolor="gray",showlegend = FALSE,
-                   xaxis=list(title="Period", titlefont=list(size=18), showline=TRUE,
-                              tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                              mirror=TRUE,showgrid=FALSE),
-                   yaxis=list(title="Sequence", titlefont=list(size=18), tickfont=list(size=16), autorange="reversed",
-                              mirror=TRUE, showline=TRUE,showgrid=FALSE))
-        
-        output$Varsplot<-renderPlotly({
-            
-            p <- plot_ly(res, height=500, width=800, x=~iter, y=~variance, name="Variance", type="scatter",
-                         mode="lines", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                         text=~paste("Iteration:", iter, "<br>Variance:", round(variance, 3)),
-                         line=list(color="#F8766D", width=4, dash="dash"))%>%
-                layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
-                       yaxis=list(title="Variance", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=40))
-            print(p)
-        })
-        
-        output$Efflossplot<-renderPlotly({
-            
-            p <- plot_ly(res, height=500, width=800, x=~iter, y=~Effloss, name="Effloss", type="scatter",
-                         mode="lines", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                         text=~paste("Iteration:", iter, "<br>Effloss:", format(round(Effloss,2),2),"%"),
-                         line=list(color="#F8766D", width=4, dash="dash"))%>%
-                layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
-                       yaxis=list(title="Efficiency loss (%)", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=40))
-            print(p)
-        })
-        
-        output$Powplot<-renderPlotly({
-            p <- plot_ly(res, height=500, width=800, x=~iter, y=~power, name="Power", type="scatter",
-                         mode="lines", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                         text=~paste("Iteration:", iter, "<br>Power:",  format(round(power,2),2),"%"),
-                         line=list(color="#00BA38", width=4, dash="dash"))%>%
-                layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
-                       yaxis=list(title="Power (%)", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=60))
-            print(p)
-        })
-        
-        output$Cstplot<-renderPlotly({
-            p <- plot_ly(res, height=500, width=800, x=~iter, y=~cost, name="cost", type="scatter",
-                         mode="lines", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                         text=~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE)),
-                         line=list(color="#00BA38", width=4, dash="dash"))%>%
-                layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
-                       yaxis=list(title="Cost ($)", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=60))
-            print(p)
-        })
-        tv<- min(res$variance)+max(res$variance)
-        output$CstVarplot<-renderPlotly({
-             p <- plot_ly(res, height=500, width=800)%>%
-                            add_markers(x=~variance, y=~cost,type="scatter",
-                                        mode = 'markers', hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                                        text=~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE) ,
-                                                    "<br>Variance:",  round(variance,4),
-                                                    "<br>Power:",  format(round(power,2),2),"%"),showlegend = F)%>%
-                layout(xaxis=list(title="Variance", titlefont=list(size=18), showline=TRUE,
-                                  tickmode = "array", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE,type = "auto"),
-                       #tickvals = list(0,round(min(res$variance),2),round(tv/4,2),round(tv/3,2),round(tv/2,2),round(max(res$variance),2))),
-                       yaxis=list(title="Cost ($)", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=60))
-        })
-        
-        #Biometrics-2017-Wu
-        #Relative cost efficiency plot
-        output$RCEplot<-renderPlotly({
-            p <- plot_ly(res, height=500, width=800, x=~iter, y=~RCE, name="Relative Cost efficiency", type="scatter",
-                       mode="markers", hoverinfo="text", hoverlabel=list(bordercolor=NULL, font=list(size=16)),
-                       text=~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE)
-                                   ,"<br> RCE", round(RCE,4)),
-                       line=list(color="#00BA38", width=4, dash="dash"))%>%
-                       layout(xaxis=list(title="Iteration", titlefont=list(size=18), showline=TRUE,
-                                  tickmode="auto", tickfont=list(size=16), nticks=6, ticks="inside",
-                                  mirror=TRUE, showgrid=FALSE),
-                       yaxis=list(title="Relative cost efficiency", titlefont=list(size=18), tickfont=list(size=16),
-                                  mirror=TRUE, showline=TRUE),
-                       legend=list(orientation="h", xanchor="center", yanchor="bottom", x=0.5, y=-0.5, font=list(size=16)),
-                       margin=list(l=100, r=60))
-            print(p)
-        })
 
-
+    ##option 2: fast    
+    output$varREMplot <- renderPlotly({
         
-        print(p1)
+        Xdlist <- list()  #design matrix
+        Xdlist[[1]] <- SWdesmat(values$Tp)
+        Inipow<- pow(CRTVarGeneralAdj(Xdlist[[1]],values$m,values$rho0,values$r,values$type)/values$N,values$effsiz,siglevel=0.05)*100
+        
+        tryCatch({
+            FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz,values$accept_pwr)
+            
+            color_palette <- colorRampPalette(brewer.pal(8, "YlOrRd"))(length(unique(FigRes[[2]]$value)) - 2)
+
+            p1 <- plot_ly(FigRes[[2]], x = ~as.numeric(Period), xgap = 4, y = ~as.factor(Sequence), ygap = 4, frame = ~iter,
+                          z = ~value, type = 'heatmap', colors = color_palette,
+                          hoverinfo = "text", showscale = FALSE, hoverlabel = list(bordercolor = NULL, font = list(size = 14)),
+                          hovertext = ~ifelse(value < 100,
+                                              paste("Xdvalue:", Xdvalue, "<br>InfCont:", value),
+                                              paste("Xdvalue:", Xdvalue, "<br>InfCont:", 'IC cannot be calculated'))) %>%
+                layout(plot_bgcolor = "gray", showlegend = FALSE,
+                       xaxis = list(title = "Period", titlefont = list(size = 18), showline = TRUE,
+                                    tickmode = "auto", tickfont = list(size = 16), nticks = 6, ticks = "inside",
+                                    mirror = TRUE, showgrid = FALSE),
+                       yaxis = list(title = "Sequence", titlefont = list(size = 18), tickfont = list(size = 16), autorange = "reversed",
+                                    mirror = TRUE, showline = TRUE, showgrid = FALSE))
+            
+            p1
+        }, error = function(e) {
+            # If an error occurs, display a text message instead of the plot
+            message <- paste0("Error: Unable to generate the plot.\n Please adjust the effect size or reduce the minimal acceptable power limit\n
+            The initial power for effect size of", " ",values$effsiz," ","is"," ",format(round(Inipow,2),2),"%")
+            plot_ly() %>%
+                layout(title = message, font = list(size = 10, color = "Red"), margin = list(t = 50))
+        })
+    })
+    output$Varsplot <- renderPlotly({
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        p2 <- generatePlotly(FigRes, ~iter, ~variance, "Iteration", "Variance",
+                             ~paste("Iteration:", iter, "<br>Variance:", round(variance, 3)))
+        p2
     })
     
+    output$Prelossplot <- renderPlotly({
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        p3 <- generatePlotly(FigRes, ~iter, ~Preloss, "Iteration", "Precision loss (%)",
+                             ~paste("Iteration:", iter, "<br>Preloss:", format(round(Preloss, 2), 2), "%"))
+        p3
+    })
+    output$Powplot <- renderPlotly({
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        p4 <- generatePlotly(FigRes, ~iter, ~power, "Iteration", "Power (%)",
+                             ~paste("Iteration:", iter, "<br>Power:", format(round(power, 2), 2), "%"))
+        p4
+    })
+    
+    output$Cstplot <- renderPlotly({
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        p5 <- generatePlotly(FigRes, ~iter, ~cost, "Iteration", "Cost ($)",
+                             ~paste("Iteration:", iter, "<br>Cost:", "$", format(cost, big.mark = ",", scientific = FALSE)))
+        p5
+    })
+    output$CstVarplot<-renderPlotly({
+
+        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim,values$effsiz,values$accept_pwr)
+        p6 <- generatePlotly(FigRes, ~variance, ~cost, "Variance", "Cost ($)",
+                             ~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE) ,
+                               "<br>Variance:",  round(variance,4),
+                               "<br>Power:",  format(round(power,2),2),"%"))
+        p6
+    })
+    #Relative cost efficiency plot
+    output$RCEplot<-renderPlotly({
+
+        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim,values$effsiz,values$accept_pwr)
+        p7 <- generatePlotly(FigRes, ~iter, ~RCE, "Iteration", "Relative Cost Efficiency (RCE)",
+                             ~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE)
+                                         ,"<br>RCE", round(RCE,4)))
+        p7
+
+    })
 }
-
-# Run the application
-shinyApp(ui = ui, server = server)
-
+    # Run the application
+    shinyApp(ui = ui, server = server)
+    
+    
+    
+    
