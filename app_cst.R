@@ -20,7 +20,6 @@ library("RColorBrewer")
 library("tidyr")
 library("memoise")
 
-
 ui <- fluidPage(
     
     tags$head(includeHTML(("google-analytics.html"))),
