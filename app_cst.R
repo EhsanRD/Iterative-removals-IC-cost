@@ -18,7 +18,7 @@ library("Matrix")
 library("plotly")
 library("RColorBrewer")
 library("tidyr")
-
+library("memoise")
 
 
 ui <- fluidPage(
@@ -305,7 +305,7 @@ server <- function(input, output, session) {
         tags$h4("")
     })
     
-
+   
     ##option 2: fast    
     output$varREMplot <- renderPlotly({
         
@@ -315,7 +315,7 @@ server <- function(input, output, session) {
         
         tryCatch({
             FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz,values$accept_pwr)
-            
+          
             color_palette <- colorRampPalette(brewer.pal(8, "YlOrRd"))(length(unique(FigRes[[2]]$value)) - 2)
 
             p1 <- plot_ly(FigRes[[2]], x = ~as.numeric(Period), xgap = 4, y = ~as.factor(Sequence), ygap = 4, frame = ~iter,
