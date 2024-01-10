@@ -2,7 +2,6 @@
 source("CRTVarAdj_func.R", local=TRUE)
 source("IterRemCst_func.R", local=TRUE)
 source("FigGenDf_func.R", local=TRUE)
-#source("IterRemoval_func.R", local=TRUE)
 
 library("shiny")
 library("shinyBS")
@@ -97,15 +96,15 @@ ui <- fluidPage(
                          value = 80, step = 10),
             
             # Input: Interval, Cost of restarting an intervention condition
-            numericInput("R", "Restart cost (intervention)",
+            numericInput("g", "Restart cost (intervention)",
                          min = 0, max = 50000,
                          value = 230, step = 50),
-            bsTooltip("R","Cost of restarting an intervention condition","right"),
+            bsTooltip("g","Cost of restarting an intervention condition","right"),
             # Input: Interval, Cost of restarting a control condition
-            numericInput("Rprim", "Restart cost (control)",
+            numericInput("gprim", "Restart cost (control)",
                          min = 0, max = 50000,
                          value = 0, step = 50),
-            bsTooltip("Rprim","Cost of restarting a control condition","right"),
+            bsTooltip("gprim","Cost of restarting a control condition","right"),
             # clicks the button
             actionButton("update", "Update"),
         ),
@@ -200,8 +199,8 @@ server <- function(input, output, session) {
         c=2500,
         p=140,
         pprim=80,
-        R=230,
-        Rprim=0
+        g=230,
+        gprim=0
     )
     
     observeEvent(input$update, {
@@ -216,8 +215,8 @@ server <- function(input, output, session) {
         values$c <- input$c
         values$p <- input$p
         values$pprim <- input$pprim
-        values$R <- input$R
-        values$Rprim <- input$Rprim
+        values$g <- input$g
+        values$gprim <- input$gprim
     })
     output$plotheader1a <- eventReactive(input$update, {
         header1a()
@@ -313,7 +312,7 @@ server <- function(input, output, session) {
         Inipow<- pow(CRTVarGeneralAdj(Xdlist[[1]],values$m,values$rho0,values$r,values$type)/values$N,values$effsiz,siglevel=0.05)*100
         
         tryCatch({
-            FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz,values$accept_pwr)
+            FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim, values$effsiz,values$accept_pwr)
           
             color_palette <- colorRampPalette(brewer.pal(8, "YlOrRd"))(length(unique(FigRes[[2]]$value)) - 2)
 
@@ -340,34 +339,34 @@ server <- function(input, output, session) {
         })
     })
     output$Varsplot <- renderPlotly({
-        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim, values$effsiz, values$accept_pwr)
         p2 <- generatePlotly(FigRes, ~iter, ~variance, "Iteration", "Variance",
                              ~paste("Iteration:", iter, "<br>Variance:", round(variance, 3)))
         p2
     })
     
     output$Prelossplot <- renderPlotly({
-        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim, values$effsiz, values$accept_pwr)
         p3 <- generatePlotly(FigRes, ~iter, ~Preloss, "Iteration", "Precision loss (%)",
                              ~paste("Iteration:", iter, "<br>Preloss:", format(round(Preloss, 2), 2), "%"))
         p3
     })
     output$Powplot <- renderPlotly({
-        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim, values$effsiz, values$accept_pwr)
         p4 <- generatePlotly(FigRes, ~iter, ~power, "Iteration", "Power (%)",
                              ~paste("Iteration:", iter, "<br>Power:", format(round(power, 2), 2), "%"))
         p4
     })
     
     output$Cstplot <- renderPlotly({
-        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim, values$effsiz, values$accept_pwr)
+        FigRes <- FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim, values$effsiz, values$accept_pwr)
         p5 <- generatePlotly(FigRes, ~iter, ~cost, "Iteration", "Cost ($)",
                              ~paste("Iteration:", iter, "<br>Cost:", "$", format(cost, big.mark = ",", scientific = FALSE)))
         p5
     })
     output$CstVarplot<-renderPlotly({
 
-        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim,values$effsiz,values$accept_pwr)
+        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim,values$effsiz,values$accept_pwr)
         p6 <- generatePlotly(FigRes, ~variance, ~cost, "Variance", "Cost ($)",
                              ~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE) ,
                                "<br>Variance:",  round(variance,4),
@@ -377,7 +376,7 @@ server <- function(input, output, session) {
     #Relative cost efficiency plot
     output$RCEplot<-renderPlotly({
 
-        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$R, values$Rprim,values$effsiz,values$accept_pwr)
+        FigRes <-  FigGenDf(values$Tp, values$N, values$m, values$rho0, values$r, values$type, values$c, values$p, values$pprim, values$g, values$gprim,values$effsiz,values$accept_pwr)
         p7 <- generatePlotly(FigRes, ~iter, ~RCE, "Iteration", "Relative Cost Efficiency (RCE)",
                              ~paste("Iteration:", iter, "<br>Cost:","$",format(cost,big.mark=",",scientific=FALSE)
                                          ,"<br>RCE", round(RCE,4)))

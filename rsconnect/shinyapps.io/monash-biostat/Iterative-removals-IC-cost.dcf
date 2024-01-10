@@ -5,10 +5,10 @@ account: monash-biostat
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9330254
-bundleId: 8126354
+bundleId: 8126192
 url: https://monash-biostat.shinyapps.io/Iterative-removals-IC-cost/
-when: 1704850562.28758
-lastSyncTime: 1704850562.2876
+when: 1704846024.72722
+lastSyncTime: 1704846024.72723
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .RData|Figure 3.png|google-analytics.html|plot.png|README.md
+ignoredFiles: Figure 3.png|plot.png|README.md

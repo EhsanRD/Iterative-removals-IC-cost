@@ -1,4 +1,4 @@
-# Functions for generating design matrices
+#Generate design matrices
 SWdesmat <- function(Tp) {
   Xsw <- matrix(data=0, ncol = Tp, nrow = (Tp-1))
   for(i in 1:(Tp-1)) {
@@ -6,7 +6,7 @@ SWdesmat <- function(Tp) {
   }
   return(Xsw)
 }
-##############
+#Get variance of the design
 CRTVarGeneralAdj <- function(Xmat, m, rho0, r, type) {
   totalvar <- 1
   sig2CP <- rho0*totalvar
@@ -39,7 +39,7 @@ CRTVarGeneralAdj <- function(Xmat, m, rho0, r, type) {
   Vall <- kronecker(diag(1,K), Vi)
   Vall <- Vall[!is.na(Xvec),!is.na(Xvec)]
   
-  #there will be problems if Zmat is not of full column rank
+  #There will be problems if Zmat is not of full column rank
   if(rankMatrix(Zmat)[1] < ncol(Zmat)) return(NA)
   else return(solve((t(Zmat)%*%solve(Vall)%*%Zmat))[ncol(Zmat),ncol(Zmat)])
 }

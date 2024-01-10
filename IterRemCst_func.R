@@ -13,7 +13,8 @@ library("Matrix")
 library("plotly")
 library("RColorBrewer")
 library("tidyr")
-#generating design matrices.
+
+#Generate design matrices
 SWdesmat <- function(Tp) {
   Xsw <- matrix(data=0, ncol = Tp, nrow = (Tp-1))
   for(i in 1:(Tp-1)) {
@@ -28,7 +29,7 @@ pow <- function(vars, effsiz, siglevel=0.05){
   return(pow)
 }
 
-DsgnCst <- function(Xdes,Tp, N,m, c, p,pprim, R, Rprim){
+DsgnCst <- function(Xdes,Tp, N,m, c, p,pprim, g, gprim){
   # Returns total trial cost, given:
   #   - number of periods, Tp
   #   - number of clusters per each sequence, N
@@ -36,8 +37,8 @@ DsgnCst <- function(Xdes,Tp, N,m, c, p,pprim, R, Rprim){
   #   - cost per cluster, c
   #   - cost per subject under intervention condition, p
   #   - cost per subject under intervention condition, pprim
-  #   - restart cost under intervention condition, R
-  #   - restart cost under intervention condition, Rprim
+  #   - restart cost under intervention condition, g
+  #   - restart cost under intervention condition, gprim
   #   - number of sequences with at least one non-missing cell, S
   #   - total non-missing cells, o
   #   - length of gaps, l
@@ -80,14 +81,14 @@ DsgnCst <- function(Xdes,Tp, N,m, c, p,pprim, R, Rprim){
   Sum_Ts=sum(Ts)
   Sum_n=sum(n_1)*2
 
-  cvec <- Sum_Is*c + 0.5*Sum_Ts*m*(p+pprim) + 0.5*(R+Rprim)*Sum_n
+  cvec <- Sum_Is*c + 0.5*Sum_Ts*m*(p+pprim) + 0.5*(g+gprim)*Sum_n
   cvec <- N*cvec
   
   return(cvec)
 }
 
-#assume one cluster is randomised to each sequence. 
-#function to calculate the information content considering centrosymmetric property. 
+#Assume one cluster is randomised to each sequence. 
+#Calculate the information content considering centrosymmetric property. 
 ICPair = function(Xdes,m,rho0,r,type) {
   
   Tp <- ncol(Xdes)
@@ -123,7 +124,7 @@ ICPair = function(Xdes,m,rho0,r,type) {
 }
 
 
-IterRemove = function(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr){
+IterRemove = function(Tp,N,m,rho0,r,type,c,p,pprim,g,gprim,effsiz,accept_pwr){
 
   S=Tp-1
   mval <- list()    #minimum lowest information content values
@@ -132,7 +133,7 @@ IterRemove = function(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr){
   Xdlist[[1]] <- SWdesmat(Tp)
   dlist[[1]] <- ICPair(Xdlist[[1]],m,rho0,r,type)
   cvec<- numeric()
-  cvec[1]<-DsgnCst(Xdlist[[1]],Tp,N, m, c, p,pprim, R,Rprim)[[1]]
+  cvec[1]<-DsgnCst(Xdlist[[1]],Tp,N, m, c, p,pprim, g,gprim)[[1]]
   varvec<- numeric()
   varvec[1]<-CRTVarGeneralAdj(Xdlist[[1]],m,rho0,r,type)
   pwvec<- numeric()
@@ -151,7 +152,7 @@ IterRemove = function(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr){
     Xdlist[[i]][clustid,perid]<- NA
     Xdlist[[i]][S+1-clustid,Tp+1-perid]<- NA
 
-    cvec[i]=DsgnCst(Xdlist[[i]],Tp,N, m, c, p,pprim, R,Rprim)
+    cvec[i]=DsgnCst(Xdlist[[i]],Tp,N, m, c, p,pprim, g,gprim)
     varvec[i]<-CRTVarGeneralAdj(Xdlist[[i]],m,rho0,r,type)
     pwvec[i]<- pow(varvec[i]/N,effsiz,siglevel=0.05)*100
 

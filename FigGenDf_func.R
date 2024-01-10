@@ -1,8 +1,7 @@
-
 library("memoise")
-FigGenDf<-function(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr) {
+FigGenDf<-function(Tp,N,m,rho0,r,type,c,p,pprim,g,gprim,effsiz,accept_pwr) {
   
-  IterRes<- IterRemove(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr)
+  IterRes<- IterRemove(Tp,N,m,rho0,r,type,c,p,pprim,g,gprim,effsiz,accept_pwr)
   melted_varmatexcl<- melt(IterRes[[1]])
   melted_desmatexcl<- melt(IterRes[[2]])
   
@@ -31,14 +30,14 @@ FigGenDf<-function(Tp,N,m,rho0,r,type,c,p,pprim,R,Rprim,effsiz,accept_pwr) {
   res <- cbind(res,res$variance[1]/res$variance,(1-(res$variance[1]/res$variance))*100,pwvec,cvec)
   colnames(res) <- c("iter","variance","r","Rvariance","Preloss","power","cost")
   
-  #Biometrics-2017-Wu
   res$CE <- (1/(res$variance))/(res$cost)
   res$RCE <- (res$CE)/(res$CE[1])
   
-
+  res_na <- melted_varmatexcl_t %>% group_by(iter) %>% summarise(na_percnt = (sum(is.na(Xdvalue))/(Tp*(Tp-1)))*100)
+  res_2 <- merge(res, res_na,by = 'iter')
   
-  melted_varmatexcl_t <- merge(res, melted_varmatexcl_t, by = "iter", all = TRUE)
-  return(list(res,melted_varmatexcl_t))
+  melted_varmatexcl_t <- merge(res_2, melted_varmatexcl_t, by = 'iter', all = TRUE)
+  return(list(res_2,melted_varmatexcl_t))
 }
 
 generatePlotly <- function(FigRes, xVar, yVar, xTitle, yTitle, hoverText) {
