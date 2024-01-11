@@ -1,28 +1,3 @@
-#setwd("G:\\Shared drives\\Ehsan PhD work\\Codes\\Git\\Iterative-Removals-SW\\IterativeInfContent")
-source("CRTVarAdj_func.R", local=TRUE)
-library("shiny")
-library("ggplot2")
-library("reshape2")
-library("plyr")
-library("swCRTdesign")
-library("matrixcalc")
-library("scales")
-library("tidyverse")
-library("shinythemes")
-library("Matrix")
-library("plotly")
-library("RColorBrewer")
-library("tidyr")
-
-#Generate design matrices
-SWdesmat <- function(Tp) {
-  Xsw <- matrix(data=0, ncol = Tp, nrow = (Tp-1))
-  for(i in 1:(Tp-1)) {
-    Xsw[i,(i+1):Tp] <- 1
-  }
-  return(Xsw)
-}
-
 pow <- function(vars, effsiz, siglevel=0.05){
   z <- qnorm(siglevel/2)
   pow <- pnorm(z + sqrt(1/vars)*effsiz)
@@ -36,9 +11,9 @@ DsgnCst <- function(Xdes,Tp, N,m, c, p,pprim, g, gprim){
   #   - number of subjects per cluster-period, m
   #   - cost per cluster, c
   #   - cost per subject under intervention condition, p
-  #   - cost per subject under intervention condition, pprim
+  #   - cost per subject under control condition, pprim
   #   - restart cost under intervention condition, g
-  #   - restart cost under intervention condition, gprim
+  #   - restart cost under control condition, gprim
   #   - number of sequences with at least one non-missing cell, S
   #   - total non-missing cells, o
   #   - length of gaps, l
@@ -122,7 +97,6 @@ ICPair = function(Xdes,m,rho0,r,type) {
   }
   return(ICmat)
 }
-
 
 IterRemove = function(Tp,N,m,rho0,r,type,c,p,pprim,g,gprim,effsiz,accept_pwr){
 
