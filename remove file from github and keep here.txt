@@ -1,7 +1,0 @@
-git rm --cached x.txt
-git commit --amend -m "delete file"
-git pull
-git push
-
-and for a single directory:
-git rm --cached -r directory_to_remove
