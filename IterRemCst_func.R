@@ -81,7 +81,8 @@ ICPair = function(Xdes,m,rho0,r,type) {
         Xdesij <- Xdes
         Xdesij[i,j] <- NA
         Xdesij[S-i+1,Tp-j+1] <- NA
-        ICmat[i,j] <- round(CRTVarGeneralAdj(Xdesij,m,rho0,r,type)/varD,10)
+        #ICmat[i,j] <- round(CRTVarGeneralAdj(Xdesij,m,rho0,r,type)/varD,10)
+        ICmat[i,j] <- CRTVarGeneralAdj(Xdesij,m,rho0,r,type)/varD
         ICmat[S-i+1,Tp-j+1] <- ICmat[i,j]
         
         if (is.na(ICmat[i,j])==TRUE & is.na(ICmat[S-i+1,Tp-j+1]==TRUE)) {
